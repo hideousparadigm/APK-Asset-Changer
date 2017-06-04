@@ -6,6 +6,7 @@ import tempfile
 import shutil
 import shlex
 import subprocess
+from sys import platform
 
 def unpack_apk(apk_path, unpack_path):
     """"Unpacks APK"""
@@ -24,14 +25,18 @@ if __name__ == '__main__':
     ARGS = PARSER.parse_args()
 
     AND_BT = os.getenv("ANDROID_HOME_BT")
-
+    print AND_BT
     if AND_BT is None:
         print "set ANDROID_HOME_BT Environment Variable to [SDK PATH]\build-tools\\{ver}"
         print "Also make sure to use the build tools >= 24.0.3"
         exit(1)
-
-    T_ALIGN = os.path.join(AND_BT, "zipalign.exe")
-    T_SIGN = os.path.join(AND_BT, "apksigner.bat")
+    print platform
+    if platform == "linux" or platform == "linux2":
+        T_ALIGN = os.path.join(AND_BT, "zipalign")
+        T_SIGN = os.path.join(AND_BT, "apksigner")
+    else:
+        T_ALIGN = os.path.join(AND_BT, "zipalign.exe")
+        T_SIGN = os.path.join(AND_BT, "apksigner.bat")
 
     ALIGN = '"{0}" -p 4 {1} AL-{1}'
     SIGN = '"{0}" sign --ks "{1}" --ks-pass pass:{2} --out signed-{3} AL-{3}'
@@ -60,7 +65,7 @@ if __name__ == '__main__':
 
     TEMP_PATH = os.path.join(tempfile.gettempdir(), ASSET_NAME + '_' +APK_NAME)
     TEMP_APK = os.path.join(TEMP_PATH, APK_NAME)
-    ASSET_FOLDER = os.path.join(TEMP_PATH, "Assets")
+    ASSET_FOLDER = os.path.join(TEMP_PATH, "assets")
     ASSET_FILE = os.path.join(ASSET_FOLDER, ASSET)
     if not ARGS.quite:
         print "TEMP FOLDER PATH TO BE USED: %s" % TEMP_PATH
@@ -117,7 +122,9 @@ if __name__ == '__main__':
         shutil.rmtree(TEMP_PATH)
         if not ARGS.quite:
             print "ALIGNING APK..."
-        subprocess.Popen(shlex.split(str.format(ALIGN, T_ALIGN, APK_NAME))).wait()
+        split1=shlex.split(str.format(ALIGN, T_ALIGN, APK_NAME))
+        print split1
+        subprocess.Popen(split1).wait()
         if not ARGS.quite:
             print "REMOVING UNALIGNED APK..."
         os.remove(APK_NAME)
